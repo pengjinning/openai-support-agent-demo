@@ -2,6 +2,22 @@
 // Define one function per tool call - each tool call should have a matching function
 // Parameters for a tool call are passed as an object to the corresponding function
 
+export const search_knowledge_base = async ({ query }: { query: string }) => {
+  try {
+    const res = await fetch(`/api/kb_search`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query }),
+    }).then((res) => res.json());
+    return res;
+  } catch (error) {
+    console.error(error);
+    return { error: "Failed to search knowledge base" };
+  }
+};
+
 export const get_order = async ({ order_id }: { order_id: string }) => {
   try {
     const res = await fetch(`/api/orders/${order_id}`).then((res) =>
@@ -224,6 +240,7 @@ export const update_info = async ({
 };
 
 export const functionsMap = {
+  search_knowledge_base: search_knowledge_base,
   get_order: get_order,
   get_order_history: get_order_history,
   cancel_order: cancel_order,

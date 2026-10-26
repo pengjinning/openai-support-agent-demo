@@ -1,8 +1,19 @@
 // List of tools available to the agent
 // No need to include the top-level wrapper object as it is added in lib/tools/tools.ts
-// More information on function calling: https://platform.openai.com/docs/guides/function-calling
+// More information on function calling: https://docs.bigmodel.cn/cn/guide/tools/function-call
 
 export const toolsList = [
+  {
+    name: "search_knowledge_base",
+    description:
+      "Search the internal knowledge base and public FAQ for relevant content (returns policies, guidelines and article snippets)",
+    parameters: {
+      query: {
+        type: "string",
+        description: "Search query describing the information to look for",
+      },
+    },
+  },
   {
     name: "get_order",
     parameters: {

@@ -108,9 +108,6 @@ export const handleTurn = async (
 
 export const processMessages = async () => {
   const {
-    chatMessages,
-    conversationItems,
-    recommendedActions,
     setChatMessages,
     setConversationItems,
     setRecommendedActions,
@@ -121,6 +118,15 @@ export const processMessages = async () => {
 
   const { setRelevantArticlesLoading, setFAQExtracts } =
     useDataStore.getState();
+
+  // Read the latest items on each access: recursive processMessages() calls
+  // replace the store array, so a snapshot taken once here would go stale.
+  const getConversationItems = () =>
+    useConversationStore.getState().conversationItems;
+  const getChatMessages = () => useConversationStore.getState().chatMessages;
+
+  const conversationItems = getConversationItems();
+  const chatMessages = getChatMessages();
 
   const allConversationItems = [
     // Adding developer prompt as first item in the conversation
@@ -180,6 +186,7 @@ export const processMessages = async () => {
         if (!item || !item.type) {
           break;
         }
+        const chatMessages = getChatMessages();
 
         // Handle differently depending on the item type
         switch (item.type) {
@@ -196,6 +203,9 @@ export const processMessages = async () => {
               parsedArguments: {},
               output: null,
             });
+            if (item.name === "search_knowledge_base") {
+              setRelevantArticlesLoading(true);
+            }
             setChatMessages([...chatMessages]);
             break;
           }
@@ -227,6 +237,7 @@ export const processMessages = async () => {
       case "response.function_call_arguments.delta": {
         // Streaming arguments delta to show in the chat
         functionArguments += data.delta || "";
+        const chatMessages = getChatMessages();
         let parsedFunctionArguments = {};
         if (functionArguments.length > 0) {
           parsedFunctionArguments = parse(functionArguments);
@@ -247,7 +258,10 @@ export const processMessages = async () => {
 
       case "response.function_call_arguments.done": {
         // This has the full final arguments string
-        const { item_id, arguments: finalArgs } = data;
+        const { item_id, arguments: finalArgs, name } = data;
+        const chatMessages = getChatMessages();
+        const recommendedActions =
+          useConversationStore.getState().recommendedActions;
 
         functionArguments = finalArgs;
 
@@ -258,6 +272,10 @@ export const processMessages = async () => {
           toolCallMessage.parsedArguments = parse(finalArgs);
           toolCallMessage.status = "completed";
           setChatMessages([...chatMessages]);
+
+          if (name === "search_knowledge_base") {
+            setRelevantArticlesLoading(true);
+          }
 
           if (
             toolCallMessage.name &&
@@ -279,6 +297,7 @@ export const processMessages = async () => {
 
       case "response.web_search_call.completed": {
         const { item_id, output } = data;
+        const chatMessages = getChatMessages();
         const toolCallMessage = chatMessages.find((m) => m.id === item_id);
         if (toolCallMessage && toolCallMessage.type === "tool_call") {
           toolCallMessage.output = output;
@@ -290,7 +309,7 @@ export const processMessages = async () => {
 
       case "response.file_search_call.completed": {
         const { item_id } = data;
-        console.log("file search call completed", data);
+        const chatMessages = getChatMessages();
         const toolCallMessage = chatMessages.find((m) => m.id === item_id);
         if (toolCallMessage && toolCallMessage.type === "tool_call") {
           toolCallMessage.status = "completed";
@@ -302,13 +321,19 @@ export const processMessages = async () => {
       case "response.output_item.done": {
         // After output item is done, adding tool call ID
         const { item } = data || {};
+        if (!item || !item.type) {
+          break;
+        }
 
-        conversationItems.push({
-          ...item,
-          results: undefined,
-        });
+        // Read the latest items from the store and sync immediately, so a
+        // recursive processMessages() call (below) always sees complete state
+        // even when text and tool calls arrive in the same response.
+        const currentItems = useConversationStore.getState().conversationItems;
+        currentItems.push({ ...item, results: undefined });
+        setConversationItems([...currentItems]);
 
         if (item.type === "function_call") {
+          const chatMessages = getChatMessages();
           const toolCallMessage = chatMessages.find((m) => m.id === item.id);
           if (toolCallMessage && toolCallMessage.type === "tool_call") {
             // Handle tool call (execute function)
@@ -320,24 +345,27 @@ export const processMessages = async () => {
             // Record tool output
             toolCallMessage.output = JSON.stringify(toolResult);
             setChatMessages([...chatMessages]);
-            conversationItems.push({
+
+            // Surface knowledge base results in the "Relevant articles" panel
+            if (item.name === "search_knowledge_base") {
+              setFAQExtracts(toolResult?.results ?? []);
+              setRelevantArticlesLoading(false);
+            }
+
+            const itemsWithOutput =
+              useConversationStore.getState().conversationItems;
+            itemsWithOutput.push({
               type: "function_call_output",
-              call_id: toolCallMessage.call_id,
+              call_id: item.call_id,
               status: "completed",
               output: JSON.stringify(toolResult),
             });
+            setConversationItems([...itemsWithOutput]);
 
             // Create another turn after tool output has been added
             await processMessages();
           }
         }
-
-        if (item.type === "file_search_call") {
-          setFAQExtracts(item.results);
-          setRelevantArticlesLoading(false);
-        }
-
-        setConversationItems([...conversationItems]);
 
         break;
       }

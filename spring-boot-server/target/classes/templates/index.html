@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer Support Agent</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <span class="brand">Customer Support Agent <span class="brand-dot">•</span> Human in the Loop</span>
+    <div class="view-toggle" role="tablist">
+      <button id="customerToggle" class="toggle-btn active" type="button">Customer View</button>
+      <button id="agentToggle" class="toggle-btn" type="button">Agent View</button>
+    </div>
+  </header>
+
+  <div class="columns">
+    <!-- Customer view -->
+    <section class="column" id="customerColumn">
+      <div class="column-title">Customer View</div>
+      <div class="chat" id="customerChat" aria-live="polite"></div>
+      <form class="composer" id="customerComposer">
+        <textarea id="customerInput" rows="2" placeholder="Message..."></textarea>
+        <button type="submit" class="send-btn" id="customerSend" disabled>Send</button>
+      </form>
+    </section>
+
+    <!-- Agent view -->
+    <section class="column" id="agentColumn">
+      <div class="column-title">Support Representative View</div>
+      <div class="agent-body">
+        <div class="chat" id="agentChat" aria-live="polite"></div>
+        <aside class="context">
+          <div class="panel">
+            <h3>Customer details</h3>
+            <div id="customerDetails" class="details-list"></div>
+          </div>
+          <div class="panel">
+            <h3>Recommended actions</h3>
+            <div id="recommendedActions" class="actions-list"></div>
+          </div>
+          <div class="panel">
+            <h3>Relevant articles</h3>
+            <div id="relevantArticles" class="articles-list"></div>
+          </div>
+        </aside>
+      </div>
+      <div class="agent-composer">
+        <div id="suggestedArea" class="suggested-area hidden">
+          <div class="suggested-bubble" id="suggestedBubble"></div>
+          <div class="suggested-actions" id="suggestedActions">
+            <button type="button" class="btn dark" id="sendNowBtn">Send now</button>
+            <button type="button" class="btn dark" id="editBtn">Edit</button>
+          </div>
+        </div>
+        <form class="composer" id="agentComposer">
+          <textarea id="agentInput" rows="2" placeholder="Message..."></textarea>
+          <button type="submit" class="send-btn" id="agentSend" disabled>Send</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</div>
+
+<dialog id="actionDialog">
+  <div class="dialog-card">
+    <h3 id="actionTitle">Confirm action</h3>
+    <p class="dialog-desc">Confirm the action to take to resolve the customer query</p>
+    <p class="dialog-fn" id="actionFnName"></p>
+    <div id="actionParams" class="dialog-params"></div>
+    <div class="dialog-footer">
+      <button type="button" class="btn ghost" id="actionCancel">Cancel</button>
+      <button type="button" class="btn dark" id="actionConfirm">Confirm</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="/js/chat.js"></script>
+</body>
+</html>

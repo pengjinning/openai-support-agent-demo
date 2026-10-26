@@ -107,6 +107,10 @@ export default function ToolCall({ toolCall }: ToolCallProps) {
       {(() => {
         switch (toolCall.tool_type) {
           case "function_call":
+            // Knowledge base search replaced the hosted file search tool
+            if (toolCall.name === "search_knowledge_base") {
+              return <FileSearchCall toolCall={toolCall} />;
+            }
             return <FunctionCall toolCall={toolCall} />;
           case "file_search_call":
             return <FileSearchCall toolCall={toolCall} />;

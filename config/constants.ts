@@ -1,6 +1,6 @@
 import { AGENT_NAME } from "./demoData";
 
-export const MODEL = "gpt-5.2";
+export const MODEL = process.env.ZHIPU_MODEL ?? "glm-4.7-flash";
 
 // Developer prompt for the assistant
 export const DEVELOPER_PROMPT = `
@@ -16,7 +16,7 @@ Ambiguity and accuracy:
 - Do not fabricate specifics (order IDs, totals, dates). Qualify assumptions when unsure.
 
 Tool guidance:
-- For general queries, search the knowledge base.
+- For general queries, search the knowledge base with search_knowledge_base.
 - If no order ID is provided, fetch order history with get_order_history, then ask the customer which order to view; do not call get_order until they specify one.
 - Call one tool at a time; wait for the tool result before calling another.
 - Use tools to take or propose actions. Do not confirm an action as done until the representative confirms it.
@@ -28,6 +28,5 @@ export const INITIAL_MESSAGE = `
 Hi, I'm ${AGENT_NAME}, your support representative. How can I help you today?
 `;
 
-// Replace with the vector store ID you get after initializing the vector store
-// Go to /init_vs to initialize the vector store with the demo knowledge base
-export const VECTOR_STORE_ID = "<vector_store_id>";
+// The knowledge base is searched locally with Zhipu embeddings (see lib/kb-search.ts);
+// no vector store setup is needed anymore.

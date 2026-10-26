@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "Customer Service Demo",
   description: "Customer Service Demo with support agent and user view",
   icons: {
-    icon: "/openai_logo.svg",
+    icon: "/zhipu_logo.svg",
   },
 };
 
